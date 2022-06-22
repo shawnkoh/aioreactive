@@ -5,7 +5,7 @@ description = "sync/await Reactive Tools for Python 3.9+"
 readme = "README.md"
 authors = ["Dag Brattli <dag@brattli.net>", "Børge Lanes"]
 license = "MIT License"
-repository = "https://github.com/dbrattli/aioreactive"
+repository = "https://github.com/shawnkoh/aioreactive"
 classifiers = [
         "Development Status :: 3 - Alpha",
         "Environment :: Other Environment",
