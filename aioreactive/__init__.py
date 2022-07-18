@@ -27,7 +27,7 @@ from typing import (
     overload,
 )
 
-from expression.core import Option, pipe
+from expression import Option, curry_flipped, pipe
 from expression.system.disposable import AsyncDisposable
 
 from .observables import AsyncAnonymousObservable, AsyncIterableObservable
@@ -39,14 +39,7 @@ from .observers import (
 )
 from .subject import AsyncSingleSubject, AsyncSubject
 from .subscription import run
-from .types import (
-    AsyncObservable,
-    AsyncObserver,
-    CloseAsync,
-    SendAsync,
-    ThrowAsync,
-    Zipper,
-)
+from .types import AsyncObservable, AsyncObserver, CloseAsync, SendAsync, ThrowAsync
 
 _A = TypeVar("_A")
 _B = TypeVar("_B")
@@ -217,7 +210,10 @@ class AsyncRx(AsyncObservable[_TSource]):
     ) -> AsyncRx[Tuple[_TSource, _TOther]]:
         from .combine import combine_latest
 
-        xs = pipe(self, combine_latest(other))
+        xs = pipe(
+            self,
+            combine_latest(other),
+        )
         return AsyncRx.create(xs)
 
     def concat(self, other: AsyncObservable[_TSource]) -> AsyncRx[_TSource]:
@@ -522,10 +518,13 @@ def choose_async(
     return choose_async(chooser)
 
 
-def combine_latest(other: AsyncObservable[_TOther]) -> Zipper[Any, _TOther]:
+@curry_flipped(1)
+def combine_latest(
+    source: AsyncObservable[_TSource], other: AsyncObservable[_TOther]
+) -> AsyncObservable[Tuple[_TSource, _TOther]]:
     from .combine import combine_latest
 
-    return combine_latest(other)
+    return pipe(source, combine_latest(other))
 
 
 def debounce(
@@ -872,6 +871,45 @@ def retry(
     return retry(retry_count)
 
 
+def scan(
+    accumulator: Callable[[_TResult, _TSource], _TResult],
+    initial: _TResult,
+) -> Callable[[AsyncObservable[_TSource]], AsyncObservable[_TResult]]:
+    """The scan operator
+
+    This operator runs the accumulator for every value from the source with the current state. After every run, the new
+    computed value is returned.
+
+    Args:
+        accumulator: An accumulator function.
+        initial: The initial state.
+
+    Returns:
+        A single-value observable.
+    """
+    from .transform import scan as _scan
+
+    return _scan(accumulator, initial)
+
+
+def scan_async(
+    accumulator: Callable[[_TResult, _TSource], Awaitable[_TResult]],
+    initial: _TResult,
+) -> Callable[[AsyncObservable[_TSource]], AsyncObservable[_TResult]]:
+    """Async version of the scan operator.
+
+    Args:
+        accumulator: An async accumulator function.
+        initial: The initial state.
+
+    Returns:
+        The scan operator.
+    """
+    from .transform import scan_async as _scan_async
+
+    return _scan_async(accumulator, initial)
+
+
 def subscribe_async(
     obv: AsyncObserver[_TSource],
 ) -> Callable[[AsyncObservable[_TSource]], Awaitable[AsyncDisposable]]:
@@ -1088,10 +1126,17 @@ def to_async_iterable(source: AsyncObservable[_TSource]) -> AsyncIterable[_TSour
     return to_async_iterable(source)
 
 
-def with_latest_from(other: AsyncObservable[_TOther]) -> Zipper[Any, _TOther]:
+@curry_flipped(1)
+def with_latest_from(
+    source: AsyncObservable[_TSource],
+    other: AsyncObservable[_TOther],
+) -> AsyncObservable[Tuple[_TSource, _TOther]]:
     from .combine import with_latest_from
 
-    return with_latest_from(other)
+    return pipe(
+        source,
+        with_latest_from(other),
+    )
 
 
 __all__ = [
@@ -1131,6 +1176,8 @@ __all__ = [
     "never",
     "retry",
     "run",
+    "scan",
+    "scan_async",
     "single",
     "skip",
     "skip_last",
