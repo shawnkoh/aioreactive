@@ -12,7 +12,6 @@ from expression.core import (
     Some,
     TailCall,
     TailCallResult,
-    match,
     pipe,
     tailrec_async,
 )

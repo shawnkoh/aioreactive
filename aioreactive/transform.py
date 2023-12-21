@@ -9,7 +9,6 @@ from expression.core import (
     TailCall,
     TailCallResult,
     compose,
-    match,
     pipe,
     tailrec_async,
 )

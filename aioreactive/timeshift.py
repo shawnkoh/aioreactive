@@ -11,7 +11,6 @@ from expression.core import (
     TailCallResult,
     aiotools,
     fst,
-    match,
     pipe,
     tailrec_async,
 )

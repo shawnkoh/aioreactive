@@ -8,7 +8,6 @@ from expression.core import (
     TailCallResult,
     aiotools,
     compose,
-    match,
     pipe,
     tailrec_async,
 )
